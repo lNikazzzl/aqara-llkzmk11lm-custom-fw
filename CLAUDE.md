@@ -81,6 +81,19 @@ dateCode 09-20-2018; node descriptor manufacturer 4151 (0x1037); no configured r
   (genBasic 0xFFF0 magic payloads), heartbeat genBasic 0xFF01 with device_temperature (tag 3,
   internal sensor) and power_outage_count (tag 5).
 
+## Test log
+
+- Factory v47 written by wire on the restored EEPROM: rejoined the user's network, works.
+- OTA factory -> custom 0.2.0 from Z2M (GitHub index): the factory client accepted it
+  (different outer/embedded versions are fine) and 0.2.0 booted.
+- Bug in 0.2.0: `--gc-sections` dropped the unreferenced `.ro_mac_address`, so the OTA
+  header and link key sections moved to 0x40/0x90 and JET wrote MAC/header/key at
+  0x40/0x50/0xA0 over our header and the start of `.rodata`. Result: "allocate space
+  failed", OTA client dead, no way back over the air. Fixed in 0.2.1 (au8MacAddress is
+  referenced in app_ota.c) and the Makefile now fails the build unless the sections sit
+  at 0x40/0x50/0xA0. 0.2.0 removed from the index.
+- Board currently runs the broken 0.2.0: it must be reflashed by wire.
+
 ## Will not do
 
 - Power metering: `power`, `energy`, `voltage`, `current` (needs the PL7211 protocol).

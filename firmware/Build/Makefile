@@ -37,7 +37,7 @@ OTA_HEADER_STRING    = DR1175r1v1UNENCRYPTED00000JN5169
 # version the running firmware reports: kept low so Zigbee2MQTT offers the factory image
 OTA_REPORTED_VERSION ?= 1
 # version of our OTA file: above the factory 47, 0x0100MMmm for release MM.mm
-OTA_FILE_VERSION     ?= 0x01000200
+OTA_FILE_VERSION     ?= 0x01000201
 CFLAGS += -DOTA_INTERNAL_STORAGE
 CFLAGS += -DCLD_OTA_MANF_ID_VALUE=$(OTA_MANUFACTURER)
 CFLAGS += -DAPP_OTA_FILE_VERSION=$(OTA_FILE_VERSION)
@@ -174,6 +174,12 @@ $(ELF): $(APPOBJS)
 	$(info Linking $@ ...)
 	$(CC) -Wl,--gc-sections -Wl,-u_AppColdStart -Wl,-u_AppWarmStart $(LDFLAGS) -T$(ZNCLKCMD) -L $(SDK_BASE_DIR)/Stack/ZCL/Build/ -o $@ -Wl,--start-group $(APPOBJS) $(addprefix -l,$(LDLIBS)) -lm -Wl,--end-group -Wl,-Map,$(TARGET)_$(JENNIC_CHIP).map
 	$(SIZE) $@
+	@# JET writes MAC, OTA header and link key at these fixed offsets, and the
+	@# factory OTA client checks the key there: anything else corrupts the image
+	@$(NM) $@ | grep -q "^00080040 A _FlsMACAddress" && \
+	 $(NM) $@ | grep -q "^00080050 A _FlsOtaHeader" && \
+	 $(NM) $@ | grep -q "^000800a0 A _FlsLinkKey" || \
+	 (echo "ERROR: serialisation sections are not at 0x40/0x50/0xA0, see app_ota.c"; rm -f $@; exit 1)
 
 $(BIN): $(ELF)
 	$(info Generating binary ...)

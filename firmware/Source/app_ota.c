@@ -190,6 +190,15 @@ PUBLIC void APP_OTA_vInit(void)
     uint8 au8CAPublicKey[22];
     uint8 au8StartSector[1] = { OTA_START_SECTOR };
     tsOTA_ImageHeader sHeader;
+    volatile uint8 u8MacByte;
+
+    /*
+     * Reference the MAC placeholder so --gc-sections keeps .ro_mac_address:
+     * without it the OTA header and the link key move 16 bytes down and JET
+     * writes the serialisation data over our own code (see tools/ota/make_ota.sh).
+     */
+    u8MacByte = au8MacAddress[0];
+    (void)u8MacByte;
 
     vLoadPersistedData();
     eOTA_UpdateClientAttributes(RELAY_EP_FIRST, 0);
