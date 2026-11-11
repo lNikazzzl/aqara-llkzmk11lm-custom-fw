@@ -16,6 +16,11 @@
 #define INPUT_DEBOUNCE_MS           50
 #define BTN_LONG_PRESS_MS           5000
 
+/* re-pairing from the wall: this many S1/S2 operations within the window
+   (rocker: each flip counts, push button: each press) */
+#define SWITCH_REPAIR_COUNT         10
+#define SWITCH_REPAIR_WINDOW_MS     10000
+
 PUBLIC void INPUTS_vInit(void);
 PUBLIC bool_t INPUTS_bPairButtonHeld(void);
 PUBLIC void INPUTS_cbTimerScan(void *pvParam);

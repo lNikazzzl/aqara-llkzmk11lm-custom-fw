@@ -5,16 +5,9 @@ JN-SW-4170 SDK (build 1840) using the start-up code of the JN-AN-1218 example.
 
 ## Build
 
-Needs BeyondStudio (JN-SW-4141) and the JN-SW-4170 SDK in `C:\NXP\bstudio_nxp`, and
-the JN-AN-1218 example from nxp.com, from which the stack configuration is derived once:
+Needs BeyondStudio (JN-SW-4141) and the JN-SW-4170 SDK in `C:\NXP\bstudio_nxp`.
 
-    python ../tools/make_zpscfg.py <JN-AN-1218>/Common_Light/Source/app_gp_notl.zpscfg Source/app.zpscfg
-
-The Makefile expects the repository at the same depth as the SDK path in
-`SDK_BASE_DIR` (relative, because msys make 3.81 ignores `/c/...` in `vpath`);
-override it on the command line otherwise.
-
-    ./build.sh              # Build/AqaraRelay_JN5169_flash.bin and Build/AqaraRelay_JN5169.ota
+    ./build.sh              # Build/AqaraRelay_JN5169.bin
     ./build.sh DEBUG=1      # verbose log of every module
     ./build.sh INPUT_ROCKER_MODE=0   # wall switch inputs as push buttons
     ./build.sh clean
@@ -24,12 +17,11 @@ override it on the command line otherwise.
 Hold BOOT (DO1) low while powering the board, then:
 
     python ../tools/jn_flash.py COM3 info
-    python ../tools/jn_flash.py COM3 flash Build/AqaraRelay_JN5169_flash.bin --erase-ok
+    python ../tools/jn_flash.py COM3 flash Build/AqaraRelay_JN5169.bin --erase-ok
 
 The chip is at CRP level 1: flash can be erased and written over UART but not
-read, so the factory firmware cannot be backed up. To go back, take the factory
-OTA image for `lumi.relay.c2acn01` from the Zigbee2MQTT OTA index and update over
-the air (or write its payload by wire with the same tool).
+read, so the factory firmware cannot be backed up. The OTA image in
+`../stock_firmware` can be flashed the same way to go back.
 
 The debug log comes out on the same UART (PROG TxD/RxD) at 115200 baud.
 
@@ -40,6 +32,7 @@ The debug log comes out on the same UART (PROG TxD/RxD) at 115200 baud.
 | On-board button, short press | toggle relay 1; if not joined, look for a network |
 | On-board button, hold 5 s | leave the network and factory reset |
 | S1 / S2 wall switch | toggle relay 1 / 2 (rocker mode: on every change) |
+| S1 or S2, 10 operations within 10 s | leave the network and factory reset, like holding the button |
 
 | LED | Meaning |
 |---|---|
