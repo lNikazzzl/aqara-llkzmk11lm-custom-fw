@@ -1,118 +1,150 @@
 # Aqara LLKZMK11LM custom firmware
 
 Replacement firmware for the Aqara dual relay module LLKZMK11LM (`lumi.relay.c2acn01`),
-MCU NXP JN5169. Goal: our firmware and the factory firmware can replace each other
-over the air (Zigbee OTA from Zigbee2MQTT), and Zigbee2MQTT keeps seeing an ordinary
-LLKZMK11LM — only the firmware version differs.
+MCU NXP JN5169. Goal: our firmware and the factory firmware replace each other over the
+air (Zigbee OTA from Zigbee2MQTT), and Zigbee2MQTT keeps seeing an ordinary LLKZMK11LM;
+only the firmware version differs. Current release: **0.2.4**.
+
+## Safety
+
+- **The power board is not isolated: terminal L (J4) is wired straight to GND.** On mains
+  the whole low-voltage side (MCU module, UART, S1/S2/COM) sits at line potential. Never
+  connect the USB-UART adapter (or anything earthed) while the board is on mains.
+- Bench tests on the power board: 15–24 V DC, **plus to N, minus to L** (re-engr.ru did
+  24 V). Then GND = DC minus and the adapter is safe; connect only GND/TX/RX, not its 3.3 V.
+- The MCU module alone runs from the adapter's 3.3 V (no relays, S1/S2 float: internal
+  pull-ups are enabled for that).
 
 ## Hardware facts
 
 - MCU module LM16-DCC-A-T1 (`aqara_relay_mcu_sch1.pdf`), power board LM16-DCC-B-T2
-  (schematic: http://re-engr.ru/aqara_relay_pwr/). Pin map in `firmware/Source/hw.h`.
+  (`aqara_relay_sch_pwr_v1.pdf`, http://re-engr.ru/aqara_relay_pwr/). Pin map in `firmware/Source/hw.h`.
 - Bistable relays ADW1203HL, two coils each: K1 on/off DIO10/DIO8, K2 on/off DIO11/DIO9,
-  active-high 50 ms pulse. Mapping is from the schematic, not yet confirmed by ear.
-- Inputs: button DIO17, wall switches S1/S2 DIO15/DIO14 (dry contact, pull-ups on the power board).
-- LEDs: blue DIO1, red DIO2 (active low). UART0 on DIO6/7 = PROG connector.
-- PL7211 power meter on SPI (DO0/DIO18/DIO19/DO1, reset DIO3). Protocol unknown.
-- Chip is at **CRP level 1** (customer settings 0x01001510 = 0xDE): UART bootloader can
-  erase and write flash but never read it; RAM write/run are blocked too. No encryption.
-  JTAG disabled.
+  2N7002 low-side, active-high 50 ms pulse. Mapping from the schematic labels, **not yet
+  checked on the power board** (which relay is L1, on vs off). Coil supply rail not traced.
+- Inputs: button DIO17, wall switches S1/S2 DIO15/DIO14 (dry contact to COM, 10k pull-ups
+  on the power board, active low). LEDs: blue DIO1, red DIO2 (active low).
+- UART0 on DIO6/7 = PROG connector (pin 5 RESET, pin 6 GND), 115200.
+- Power supply: non-isolated buck (U2 SC1124) from mains, TPS76333 3.3 V.
+- PL7211 power meter on SPI (DO0/DIO18/DIO19/DO1, reset DIO3 with pull-up). Protocol unknown,
+  our firmware leaves its pins alone.
+- Chip is at **CRP level 1** (customer settings 0x01001510 = 0xDE): the UART bootloader can
+  erase and write flash but never read it; RAM write/run are blocked. No encryption, JTAG off.
+- MAC comes from the chip's index sector (00:15:8d:00:0a:97:3c:a9 on this board), not from the image.
 
 ## Toolchain quirks
 
-- BeyondStudio + JN-SW-4170 build 1840 in `C:\NXP\bstudio_nxp`. Build with `firmware/build.sh`.
+- BeyondStudio + JN-SW-4170 build 1840 in `C:\NXP\bstudio_nxp`. Build with `firmware/build.sh`
+  (`DEBUG=1` is the default; `DEBUG=0` drops the verbose log).
 - msys make 3.81: SDK path must be relative (vpath ignores `/c/...`), no `-j`,
   `.d` rule must `touch $@`, generated `gen/` sources need explicit pattern rules.
 - `version.h` collides with the SDK's `ZCIF/Include/version.h`; ours is `app_version.h`.
-- `tools/make_zpscfg.py` derives `firmware/Source/app.zpscfg` from the JN-AN-1218 example.
-  Stack GroupTable size must be >= `CLD_GROUPS_MAX_NUMBER_OF_GROUPS` or endpoint registration fails.
+- `tools/make_zpscfg.py` derives `firmware/Source/app.zpscfg` from the JN-AN-1218 example
+  (endpoints/clusters of the factory firmware). Stack GroupTable size must be >=
+  `CLD_GROUPS_MAX_NUMBER_OF_GROUPS` or endpoint registration fails.
+- `--gc-sections` drops unreferenced `.ro_mac_address`; `app_ota.c` references
+  `au8MacAddress` and the Makefile fails the build unless MAC/OTA header/link key are at
+  0x40/0x50/0xA0 (where JET writes them and the factory OTA client checks the key).
+- `OTA_TIME_INTERVAL_BETWEEN_REQUESTS` must stay undefined: it adds 10–20 s per 48-byte block.
+- Releases: bump `APP_VERSION_STRING` (app_version.h) and `OTA_FILE_VERSION` (Makefile,
+  0x0100MMmm); `OTA_REPORTED_VERSION` stays 1.
 
-## Flashing and backups
+## User decisions
 
-- Bootloader: hold BOOT (DO1 to GND) while powering up. `tools/jn_flash.py COM3 info|flash`.
-  Erasing needs `--erase-ok`; always ask the user before an erase.
-- `stock_firmware/`: factory OTA image v47 (Lumi 0x115F, image type 0x0101, header string
-  `DR1175r1v1UNENCRYPTED00000JN5169`, embedded OTA header at image offset 0x54) and the
-  same image prepared for the UART flasher.
-- `eeprom_backup.bin`: full EEPROM (255 x 64 B) taken after the factory firmware was erased.
-  **Contains the Zigbee network key — never publish it.** Factory data uses segments 0–127,
-  128–254 were empty. `index_sector_0x01001400.bin`: MAC and chip settings.
-- `tools/eeprom_dump/` + `tools/eeprom_capture.py`: read-only EEPROM dumper firmware.
+- The verbose log stays in production images.
+- The running firmware reports a lowered OTA version (1), so Z2M always shows an update
+  (to the factory image); our files carry 0x0100MMmm. Index windows, see below.
+- Every firmware switch erases the Zigbee stack records and needs pairing again.
+- Only stage 1 (no power metering).
+- Code published on GitHub; ask before an erase; pushes of releases have been done right away.
 
-## Done
+## Firmware design (0.2.4)
 
-- Toolchain verified; NXP example builds.
-- Factory firmware erased; EEPROM backed up; our firmware flashed by wire.
-- Firmware v0.1.0: Zigbee 3.0 router, OnOff on EP1/EP2, relay pulse driver, button
-  (short = toggle L1 / start pairing, 5 s = leave + reset), S1/S2 inputs, LEDs, state
-  restore after power cut. It inherited the factory network data from EEPROM and is
-  controllable from Zigbee2MQTT (verified on the bench without the power board).
+- Basic: `LUMI` / `lumi.relay.c2acn01`, appVersion 1, stackVersion 2, hwVersion 19,
+  SW build `custom-<version>`. Endpoints as the factory interview: EP1 dev 257 in
+  [0,3,4,5,1,2,10,6,16,0x0B04,12] out [25,10]; EP2 dev 257 in [6,16,4,5]. Node descriptor
+  manufacturer 4151 (0x1037). Z2M configures no reportings: we report OnOff ourselves.
+- Lumi protocol (lumi.c, on raw APS before the ZCL): interlock genBinaryOutput 0xFF06,
+  power_outage_memory genBasic 0xFFF0 magic payloads, heartbeat genBasic 0xFF01 every 50 min
+  with tags 3 (chip temperature), 5 (power-on count), 100/101 (relays).
+- OTA client (app_ota.c, from JN-AN-1218): manufacturer 0x115F, image type 0x0101, header
+  string `DR1175r1v1UNENCRYPTED00000JN5169`, server = coordinator, internal storage from
+  sector 8, refuses its own image. The factory client accepts our files (outer and embedded
+  versions may differ).
+- EEPROM: PDM on **63 segments** (0..62). Our settings outside the PDM in segments 192–207
+  (app_store.c, round robin with CRC). Segment 127 is factory non-PDM data, never touched.
+- PDM segment header: bytes 0-1 = record id. 0xF000.. (APL) and 0xF100.. (NWK, 0xF106
+  frame counter bitmap) are the stack in **both** firmwares, but in different formats
+  (other SDK build: e.g. a NIB field at 0x2c0 vs 0x2c8). 0x0005/09/0A/0B/0C/1F/21/24/25 are
+  Lumi records (0x0024 calibration-like floats). 0xA102 is our OTA state.
+- nvm_clean.c: raw-erases the stack (0xF000–0xF1FF) and 0xA1xx segments, Lumi records kept.
+  Custom → factory: at `E_CLD_OTA_INTERNAL_COMMAND_RESET_TO_UPGRADE` if the downloaded
+  image's embedded version != `APP_OTA_REPORTED_VERSION`. Factory → custom: at start, if the
+  CRC of the Lumi record segments differs from the one in app_store (the factory firmware
+  rewrites its records on every start, we never write them; first start counts as changed).
+  Do not detect by ids 0xF000–0xF003: our stack writes them too.
 
-## Stage 1 (code written, not yet tested on the board): interchangeable with the factory firmware
+## Tools and files
 
-Firmware 0.2.0 implements the list below. Build outputs in `firmware/Build/`:
-`AqaraRelay_JN5169_flash.bin` (UART flasher, embedded OTA version 1) and
-`AqaraRelay_JN5169.ota` (OTA file version 0x01000200). Image layout checked against the
-factory image: MAC at 0x40, OTA header at 0x50, link key `ZigBeeAlliance09` at 0xA0.
-Open question for the test: the factory image has the same version outside and inside
-(47/47), ours differs (0x01000200/1); unknown whether the factory client checks that.
-`tools/eeprom_dump` built with `make RESTORE=1` + `tools/eeprom_restore.py` writes
-`eeprom_backup.bin` back (also saves the current EEPROM first).
+- `tools/jn_flash.py COM3 info|flash <bin> --erase-ok` — UART bootloader (BOOT = DO1 to GND at power-up).
+- `tools/uart_logger.py COM3 logs/uart.log` — runs in the background, timestamps lines,
+  reopens the port. `touch logs/uart.log.pause` releases the port (flasher, EEPROM tools),
+  remove the file to resume. Boot lines are lost when the adapter itself is replugged
+  (the board starts before the port opens): power-cycle only the board, or flash (the
+  bootloader reset keeps the port).
+- `tools/eeprom_dump` (`make` read-only dumper, `make RESTORE=1` embeds `eeprom_backup.bin`),
+  `tools/eeprom_capture.py`, `tools/eeprom_restore.py COM3 eeprom_backup.bin <save-before>`.
+- `tools/ota/make_ota.sh` (JET, called by the Makefile), `tools/ota/make_index.py`.
+- `stock_firmware/`: factory OTA v47 (182206 B, same as the official zigbee-OTA file) and
+  the image for the UART flasher. Factory layout: MAC 0x40, OTA header 0x50, key 0xA0
+  (image offsets; +4 in the flasher file).
+- EEPROM snapshots (all contain the **network key — never publish**): `eeprom_backup.bin`
+  (factory state, CRC 47203fff), `eeprom_before_restore.bin` (after 0.1.0),
+  `eeprom_before_restore_021*.bin` (after 0.2.1), `eeprom_after_stock_crash.bin`.
+  `index_sector_0x01001400.bin`: MAC and chip settings.
+- `re/`: disassembly work (`stock.img`, `mine.dis`, library listings).
+- The factory firmware prints on the same UART (`Lumi_NVM_InitData`, and a stack dump on a crash).
 
-Factory interview data (Z2M database): EP1 dev 257 in [0,3,4,5,1,2,10,6,16,0x0B04,12]
-out [25,10]; EP2 dev 257 in [6,16,4,5]; Basic appVersion 1, stackVersion 2, hwVersion 19,
-dateCode 09-20-2018; node descriptor manufacturer 4151 (0x1037); no configured reportings.
+## Publishing
 
-- Report Basic manufacturer `LUMI`, model `lumi.relay.c2acn01` so Z2M uses its LLKZMK11LM definition.
-- OTA client matching the factory one (manufacturer 0x115F, image type 0x0101, same header
-  string, internal flash storage); OTA file built with JET with a version above 47.
-- Version policy (user decision): the running firmware reports a **lowered** current file
-  version so Z2M offers the factory image; "update available" stays visible. Custom images
-  are offered via `ota.zigbee_ota_override_index_location` or a per-request `url`.
-  Published index (`ota/index.json` in the GitHub repo lNikazzzl/aqara-llkzmk11lm-custom-fw)
-  uses min/maxFileVersion so the entries do not shadow each other: our image for running
-  versions 2..16777727, the factory v47 (pointer to the official zigbee-OTA URL) for 0..1.
-  Z2M takes the first matching entry and the override index goes first, so without the
-  windows it would keep offering our own image after the switch.
-- EEPROM shared with the factory firmware: no PDM wipe, PDM on segments 0–126 (segment 127 is non-PDM factory data),
-  our own data outside PDM in segments 192–207 (app_store.c), stack table sizes matching the
-  factory ones. Restore `eeprom_backup.bin` before testing (needs a small restore firmware).
-- Lumi attributes Z2M uses: interlock (genBinaryOutput 0xFF06), power_outage_memory
-  (genBasic 0xFFF0 magic payloads), heartbeat genBasic 0xFF01 with device_temperature (tag 3,
-  internal sensor) and power_outage_count (tag 5).
+- GitHub `lNikazzzl/aqara-llkzmk11lm-custom-fw` (clone in `..\aqara-llkzmk11lm-custom-fw`),
+  SSH with the user's main key. Commits as `lNikazzzl <lNikazzzl@users.noreply.github.com>`.
+- Never published: EEPROM dumps, index sector, factory firmware, the NXP SDK/example,
+  `app.zpscfg` (.gitignore). Files derived from NXP code carry the NXP notice (NOTICE.md);
+  re-add it when copying them into the repo. Own code marked MIT (user has not confirmed
+  the licence choice).
+- Release: copy sources, put the `.ota` into `ota/`, regenerate `ota/index.json` with
+  `make_index.py` (custom entry min 2 / max 16777727; factory entry = official URL, min 0 / max 1).
+- Zigbee2MQTT (Home Assistant add-on): `ota.zigbee_ota_override_index_location:
+  https://raw.githubusercontent.com/lNikazzzl/aqara-llkzmk11lm-custom-fw/main/ota/index.json`.
+  Override entries match first; Z2M answers the device's own periodic query with 0x98.
 
 ## Test log
 
-- Factory v47 written by wire on the restored EEPROM: rejoined the user's network, works.
-- OTA factory -> custom 0.2.0 from Z2M (GitHub index): the factory client accepted it
-  (different outer/embedded versions are fine) and 0.2.0 booted.
-- Bug in 0.2.0: `--gc-sections` dropped the unreferenced `.ro_mac_address`, so the OTA
-  header and link key sections moved to 0x40/0x90 and JET wrote MAC/header/key at
-  0x40/0x50/0xA0 over our header and the start of `.rodata`. Result: "allocate space
-  failed", OTA client dead, no way back over the air. Fixed in 0.2.1 (au8MacAddress is
-  referenced in app_ota.c) and the Makefile now fails the build unless the sections sit
-  at 0x40/0x50/0xA0. 0.2.0 removed from the index.
-- 0.2.1/0.2.2: PDM with 127 segments picked up stale stack records (device "on the network"
-  but nothing reached the coordinator); 0.2.2 went back to 63 segments, needed re-pairing.
-- 0.2.3: OTA_TIME_INTERVAL_BETWEEN_REQUESTS removed (10-20 s per 48-byte block). Custom ->
-  factory over the air then took 18 min, but the factory firmware crashed at start in
-  ZPS_u64NwkNibGetMappedIeeeAddr (found by disassembling the factory image): our stack
-  records (other SDK build, other table sizes) under the same ids 0xF000../0xF100...
-  The factory PDM also uses segments above 62 (it wrote stack records into 73..106).
-- PDM segment header: bytes 0-1 = record id. Ids: 0xF000.. (APL) and 0xF100.. (NWK, 0xF106
-  frame counter bitmap) are the stack in both firmwares; 0x0005/09/0A/0B/0C/1F/21/24/25 are
-  Lumi app records (0x0024 calibration-like floats); 0xA102 our OTA state.
-- 0.2.4 (nvm_clean.c): the stack records are raw-erased on every firmware switch, Lumi
-  records kept. Custom -> factory: erase at E_CLD_OTA_INTERNAL_COMMAND_RESET_TO_UPGRADE when
-  the downloaded image's embedded version != APP_OTA_REPORTED_VERSION. Factory -> custom:
-  at start, a CRC of the Lumi record segments differs from the one saved in app_store
-  (the factory firmware updates them on every start, we never write them). Pairing is
-  needed after every switch. Verified: first start erased and re-paired, a reboot kept the
-  network, custom -> factory OTA erased 57 segments and the factory firmware started
+- Factory v47 by wire on the restored EEPROM: rejoined the user's network.
+- Factory → custom 0.2.0 over the air worked; 0.2.0 had the gc-sections layout bug (OTA
+  client dead), removed. 0.2.1/0.2.2 with 127 PDM segments picked up stale stack records
+  (on the network for the firmware, nothing reached the coordinator) → back to 63, re-paired.
+- 0.2.3: custom → factory over the air took 18 min, then the factory firmware crashed in
+  `ZPS_u64NwkNibGetMappedIeeeAddr` (found by disassembling the factory image) on our stack
+  records. The factory PDM writes beyond segment 62 (it used 73..106).
+- 0.2.4: first start erased 81 stack segments, paired; a reboot kept the network; custom →
+  factory over the air (16 min) erased 57 segments and the factory firmware started
   without crashing.
+- On this board Lumi records 0x000C and 0x001F are gone (overwritten while the factory
+  firmware was crashing); they are in `eeprom_backup.bin`.
+
+## Open
+
+- Factory firmware after the switch: pairing and relay control from Z2M not confirmed yet.
+- Factory → custom 0.2.4 over the air (with the factory client's own block timing).
+- Power board on 24 V DC: relay clicks, L1/L2 and on/off mapping, pulse length.
+- Optional speed-up: Z2M `ota.image_block_response_delay` / `default_maximum_data_size`
+  (from memory, unverified) and a 64-byte block in our client.
+- Ideas: LED flash after rejoin; no relay pulse at boot when the state did not change.
 
 ## Will not do
 
 - Power metering: `power`, `energy`, `voltage`, `current` (needs the PL7211 protocol).
   These stay empty in Z2M with our firmware.
-- Any other Aqara-specific feature not listed in stage 1.
+- Any other Aqara-specific feature.
