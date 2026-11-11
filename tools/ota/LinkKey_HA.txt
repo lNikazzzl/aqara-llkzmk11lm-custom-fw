@@ -1,0 +1,2 @@
+# ZigBeeAlliance09, the HA default link key the factory image carries
+5a6967426565416c6c69616e63653039

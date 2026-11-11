@@ -1,0 +1,25 @@
+# Device-specific data: the EEPROM holds the Zigbee network key. Never commit.
+eeprom_*.bin
+eeprom_image.h
+index_sector_*.bin
+
+# Factory firmware (not ours to distribute)
+stock_firmware/
+
+# NXP SDK and example (download from nxp.com)
+JN-AN-1218*/
+JN-SW-*/
+firmware/Source/app.zpscfg
+
+# Build output; released OTA files go to ota/ by hand
+firmware/Build/*
+!firmware/Build/Makefile
+tools/eeprom_dump/Build/*
+!tools/eeprom_dump/Build/Makefile
+*.o
+*.d
+*.elf
+*.map
+ota_work/
+gen/
+__pycache__/

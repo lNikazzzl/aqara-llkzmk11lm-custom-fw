@@ -1,0 +1,16 @@
+[
+  {
+    "url": "https://raw.githubusercontent.com/lNikazzzl/aqara-llkzmk11lm-custom-fw/main/ota/lumi.relay.c2acn01_custom_0.2.0.ota",
+    "fileVersion": 16777728,
+    "fileSize": 156590,
+    "manufacturerCode": 4447,
+    "imageType": 257,
+    "sha512": "da7c753d3936a43e2f2e236c13a8e0f639ff87bddc7e105d4b5343edccbac06d2adefb407df662cb4588456b4051254557c68b220ba5882ad112a197792d38ed",
+    "modelId": "lumi.relay.c2acn01",
+    "manufacturerName": [
+      "LUMI"
+    ],
+    "otaHeaderString": "DR1175r1v1UNENCRYPTED00000JN5169",
+    "releaseNotes": "0.2.0: experimental, OTA path not yet tested on hardware"
+  }
+]

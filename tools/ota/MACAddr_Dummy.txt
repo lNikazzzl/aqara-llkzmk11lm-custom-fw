@@ -1,0 +1,2 @@
+# placeholder MAC, the device keeps its own
+ffffffffffffffff

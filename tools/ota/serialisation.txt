@@ -1,0 +1,2 @@
+MACAddr_Dummy.txt,0044,8
+LinkKey_HA.txt,00a4,16

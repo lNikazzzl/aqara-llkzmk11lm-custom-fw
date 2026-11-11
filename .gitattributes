@@ -1,0 +1,4 @@
+* text=auto
+*.ota binary
+*.bin binary
+*.sh text eol=lf
