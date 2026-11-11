@@ -46,6 +46,8 @@
 
 #include "app_version.h"
 #include "PDM_IDs.h"
+#include "nvm_clean.h"
+#include "app_store.h"
 #include "app_main.h"
 #include "app_node.h"
 #include "app_zcl.h"
@@ -167,6 +169,20 @@ PUBLIC void vAppMain(void)
     /* routers never sleep, but the power manager still dozes the CPU when idle */
     PWRM_vInit(E_AHI_SLEEP_OSCON_RAMON);
     /* same EEPROM layout as the factory firmware, see PDM_IDs.h */
+    /* the factory firmware ran since our last start: its stack records are not ours to use */
+    {
+        tsAppData sStored;
+        uint32 u32Fingerprint = NVM_u32FactoryFingerprint();
+
+        STORE_vLoad(&sStored);
+        if (sStored.u32FactoryFingerprint != u32Fingerprint)
+        {
+            DBG_vPrintf(TRUE, "APP: factory firmware ran before us, starting with a clean network\n");
+            (void)NVM_u8EraseStackRecords();
+            sStored.u32FactoryFingerprint = u32Fingerprint;
+            STORE_vSave(&sStored);
+        }
+    }
     PDM_eInitialise(PDM_SEGMENTS);
     PDUM_vInit();
 

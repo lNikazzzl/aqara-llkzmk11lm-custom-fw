@@ -23,3 +23,6 @@ tools/eeprom_dump/Build/*
 ota_work/
 gen/
 __pycache__/
+
+# UART logs
+logs/

@@ -46,6 +46,7 @@
 #include "app_node.h"
 #include "app_ota.h"
 #include "led.h"
+#include "nvm_clean.h"
 
 #ifdef DEBUG_OTA
 #define TRACE_OTA TRUE
@@ -88,6 +89,24 @@ PRIVATE uint32 u32DownloadIdleSec;
 PRIVATE bool_t bDownloading;
 PRIVATE bool_t bWaitUpgradeTime;
 PRIVATE bool_t bKeyVerified;
+
+/*
+ * Our images carry APP_OTA_REPORTED_VERSION in their embedded OTA header, the
+ * factory images their real version (47). Read it from the downloaded image.
+ */
+PRIVATE bool_t bDownloadedImageIsFactory(uint8 u8StartSector)
+{
+    uint8 au8Version[4];
+    uint32 u32Offset = (uint32)&_FlsOtaHeader - (uint32)&_flash_start;
+    uint32 u32Version;
+
+    /* u32FileVersion is at byte 14 of the OTA header, little endian */
+    u32Offset += u8StartSector * sNvmDefsStruct.u32SectorSize + 14;
+    bAHI_FullFlashRead(u32Offset, sizeof(au8Version), au8Version);
+    u32Version = au8Version[0] | (au8Version[1] << 8) | ((uint32)au8Version[2] << 16) | ((uint32)au8Version[3] << 24);
+    DBG_vPrintf(TRUE, "OTA: new image reports version 0x%08x\n", u32Version);
+    return u32Version != APP_OTA_REPORTED_VERSION;
+}
 
 PRIVATE void vPersist(void)
 {
@@ -328,6 +347,15 @@ PUBLIC void APP_OTA_vHandleEvent(tsOTA_CallBackMessage *psMsg)
         bWaitUpgradeTime = TRUE;
         break;
     }
+
+    case E_CLD_OTA_INTERNAL_COMMAND_RESET_TO_UPGRADE:
+        /* last call before the SDK activates the new image and resets */
+        if (bDownloadedImageIsFactory(psMsg->u8ImageStartSector[0]))
+        {
+            DBG_vPrintf(TRUE, "OTA: switching to the factory firmware, erasing the stack records\n");
+            (void)NVM_u8EraseStackRecords();
+        }
+        break;
 
     case E_CLD_OTA_INTERNAL_COMMAND_SAVE_CONTEXT:
         vPersist();

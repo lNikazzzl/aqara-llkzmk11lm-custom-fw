@@ -124,7 +124,7 @@
 #define OTA_MAX_CO_PROCESSOR_IMAGES         0
 #define OTA_CLD_ATTR_CURRENT_FILE_VERSION
 #define OTA_MAX_BLOCK_SIZE                  48      /* multiple of 16 for internal flash */
-#define OTA_TIME_INTERVAL_BETWEEN_REQUESTS  RND_u32GetRand(10, 20)
+/* no OTA_TIME_INTERVAL_BETWEEN_REQUESTS: with it every 48-byte block waits 10-20 s (hours per image) */
 #define OTA_TIME_INTERVAL_BETWEEN_RETRIES   RND_u32GetRand(10, 20)
 #define CLD_OTA_MAX_BLOCK_PAGE_REQ_RETRIES  240
 #define OTA_STRING_COMPARE

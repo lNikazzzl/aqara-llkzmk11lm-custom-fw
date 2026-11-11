@@ -1,11 +1,11 @@
 [
   {
-    "url": "https://raw.githubusercontent.com/lNikazzzl/aqara-llkzmk11lm-custom-fw/main/ota/lumi.relay.c2acn01_custom_0.2.1.ota",
-    "fileVersion": 16777729,
-    "fileSize": 156606,
+    "url": "https://raw.githubusercontent.com/lNikazzzl/aqara-llkzmk11lm-custom-fw/main/ota/lumi.relay.c2acn01_custom_0.2.4.ota",
+    "fileVersion": 16777732,
+    "fileSize": 158414,
     "manufacturerCode": 4447,
     "imageType": 257,
-    "sha512": "f7c57b7efc5d7a75cb2aaef501a2671864b545ed2292d1fe8d82905062eb64220b24fce7569dbaa6df3e37ac04727d4c6d89a8ed48df1fd56561e083632ea6eb",
+    "sha512": "4d7dd4f5fe43adb153ed0aadebca9e50d8e7028ca2b9656319ca3e82c851f3d7314aa2ef698b0718fe5881ac4921944d17a829b3b989778b2d9cd318717e236b",
     "modelId": "lumi.relay.c2acn01",
     "manufacturerName": [
       "LUMI"
@@ -13,7 +13,7 @@
     "otaHeaderString": "DR1175r1v1UNENCRYPTED00000JN5169",
     "minFileVersion": 2,
     "maxFileVersion": 16777727,
-    "releaseNotes": "Custom firmware 0.2.1 (experimental). Offered to the factory firmware."
+    "releaseNotes": "Custom firmware 0.2.4 (experimental). Offered to the factory firmware; pairing is required after every switch."
   },
   {
     "url": "https://raw.githubusercontent.com/Koenkk/zigbee-OTA/master/images/Lumi/lumi.relay.c2acn01_20211201_v0047.ota",
@@ -29,6 +29,6 @@
     "otaHeaderString": "DR1175r1v1UNENCRYPTED00000JN5169",
     "minFileVersion": 0,
     "maxFileVersion": 1,
-    "releaseNotes": "Factory firmware v47 from the official Zigbee2MQTT OTA repository. Offered to the custom firmware."
+    "releaseNotes": "Factory firmware v47 from the official Zigbee2MQTT OTA repository. Offered to the custom firmware; pairing is required after the switch."
   }
 ]

@@ -43,6 +43,11 @@ copy) to devices running version 1. So Zigbee2MQTT always shows an update, and
 using it flips between the two. The real build is in the Basic cluster's SW build
 ID (`custom-<version>`).
 
+The two firmwares cannot share the Zigbee stack records (different SDK builds),
+so every switch erases them and the device has to be **paired again** (permit join;
+hold the button if the factory firmware does not start pairing by itself). Lumi's
+own records (calibration, settings) are kept.
+
 ## Building
 
 Needs NXP BeyondStudio (JN-SW-4141), the JN-SW-4170 SDK and the JN-AN-1218

@@ -23,6 +23,7 @@ typedef struct
     uint8 bInterlock;
     uint8 bOutageMemory;
     uint16 u16PowerOnCount;
+    uint32 u32FactoryFingerprint;   /* NVM_u32FactoryFingerprint() at our last start */
 } tsAppData;
 
 /* Loads the newest valid slot, or defaults if there is none */

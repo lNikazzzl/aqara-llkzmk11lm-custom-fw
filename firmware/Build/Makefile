@@ -37,10 +37,11 @@ OTA_HEADER_STRING    = DR1175r1v1UNENCRYPTED00000JN5169
 # version the running firmware reports: kept low so Zigbee2MQTT offers the factory image
 OTA_REPORTED_VERSION ?= 1
 # version of our OTA file: above the factory 47, 0x0100MMmm for release MM.mm
-OTA_FILE_VERSION     ?= 0x01000201
+OTA_FILE_VERSION     ?= 0x01000204
 CFLAGS += -DOTA_INTERNAL_STORAGE
 CFLAGS += -DCLD_OTA_MANF_ID_VALUE=$(OTA_MANUFACTURER)
 CFLAGS += -DAPP_OTA_FILE_VERSION=$(OTA_FILE_VERSION)
+CFLAGS += -DAPP_OTA_REPORTED_VERSION=$(OTA_REPORTED_VERSION)
 BDB_SUPPORT_NWK_STEERING = 1
 
 # Debug log on UART0 (PROG connector) at 115200
@@ -48,6 +49,8 @@ TRACE ?= 1
 ifeq ($(TRACE), 1)
 CFLAGS += -DDBG_ENABLE
 endif
+# verbose log of every module; on by default, also in released images (make DEBUG=0 to drop)
+DEBUG ?= 1
 ifeq ($(DEBUG), 1)
 CFLAGS += -DDEBUG_APP -DDEBUG_NODE -DDEBUG_ZCL -DDEBUG_RELAY -DDEBUG_INPUTS -DDEBUG_OTA -DDEBUG_LUMI -DDEBUG_STORE
 endif
@@ -92,6 +95,7 @@ APPSRC += app_device.c
 APPSRC += app_ota.c
 APPSRC += app_store.c
 APPSRC += lumi.c
+APPSRC += nvm_clean.c
 
 INCFLAGS += -I$(APP_SRC_DIR)
 INCFLAGS += -I$(GEN_DIR)

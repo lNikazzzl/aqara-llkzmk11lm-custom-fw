@@ -92,7 +92,24 @@ dateCode 09-20-2018; node descriptor manufacturer 4151 (0x1037); no configured r
   failed", OTA client dead, no way back over the air. Fixed in 0.2.1 (au8MacAddress is
   referenced in app_ota.c) and the Makefile now fails the build unless the sections sit
   at 0x40/0x50/0xA0. 0.2.0 removed from the index.
-- Board currently runs the broken 0.2.0: it must be reflashed by wire.
+- 0.2.1/0.2.2: PDM with 127 segments picked up stale stack records (device "on the network"
+  but nothing reached the coordinator); 0.2.2 went back to 63 segments, needed re-pairing.
+- 0.2.3: OTA_TIME_INTERVAL_BETWEEN_REQUESTS removed (10-20 s per 48-byte block). Custom ->
+  factory over the air then took 18 min, but the factory firmware crashed at start in
+  ZPS_u64NwkNibGetMappedIeeeAddr (found by disassembling the factory image): our stack
+  records (other SDK build, other table sizes) under the same ids 0xF000../0xF100...
+  The factory PDM also uses segments above 62 (it wrote stack records into 73..106).
+- PDM segment header: bytes 0-1 = record id. Ids: 0xF000.. (APL) and 0xF100.. (NWK, 0xF106
+  frame counter bitmap) are the stack in both firmwares; 0x0005/09/0A/0B/0C/1F/21/24/25 are
+  Lumi app records (0x0024 calibration-like floats); 0xA102 our OTA state.
+- 0.2.4 (nvm_clean.c): the stack records are raw-erased on every firmware switch, Lumi
+  records kept. Custom -> factory: erase at E_CLD_OTA_INTERNAL_COMMAND_RESET_TO_UPGRADE when
+  the downloaded image's embedded version != APP_OTA_REPORTED_VERSION. Factory -> custom:
+  at start, a CRC of the Lumi record segments differs from the one saved in app_store
+  (the factory firmware updates them on every start, we never write them). Pairing is
+  needed after every switch. Verified: first start erased and re-paired, a reboot kept the
+  network, custom -> factory OTA erased 57 segments and the factory firmware started
+  without crashing.
 
 ## Will not do
 
