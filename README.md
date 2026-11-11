@@ -35,10 +35,13 @@ ota:
   zigbee_ota_override_index_location: https://raw.githubusercontent.com/lNikazzzl/aqara-llkzmk11lm-custom-fw/main/ota/index.json
 ```
 
-The firmware reports a deliberately low version, so Zigbee2MQTT keeps offering the
-factory image as an update; use the OTA page, or the `update` request, to switch.
-To return to the factory firmware, remove the index (or use the downgrade
-request) and update from the official index.
+The index switches the firmware in both directions. This firmware reports a
+deliberately low version (1), the factory one reports 47, and each entry is only
+offered to the other: the custom image to devices running version 2 or higher,
+the factory image (a pointer to the official Zigbee2MQTT OTA repository, not a
+copy) to devices running version 1. So Zigbee2MQTT always shows an update, and
+using it flips between the two. The real build is in the Basic cluster's SW build
+ID (`custom-<version>`).
 
 ## Building
 

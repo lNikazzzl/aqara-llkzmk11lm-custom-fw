@@ -11,6 +11,24 @@
       "LUMI"
     ],
     "otaHeaderString": "DR1175r1v1UNENCRYPTED00000JN5169",
-    "releaseNotes": "0.2.0: experimental, OTA path not yet tested on hardware"
+    "minFileVersion": 2,
+    "maxFileVersion": 16777727,
+    "releaseNotes": "Custom firmware 0.2.0 (experimental). Offered to the factory firmware."
+  },
+  {
+    "url": "https://raw.githubusercontent.com/Koenkk/zigbee-OTA/master/images/Lumi/lumi.relay.c2acn01_20211201_v0047.ota",
+    "fileVersion": 47,
+    "fileSize": 182206,
+    "manufacturerCode": 4447,
+    "imageType": 257,
+    "sha512": "66380db41c6f9cc8d4c74809caff46c0cb1b691046c3e490fe8d98f2fa2a5c6acceb1d27456a3d7efd50cde92ef150c5adbc0287538a7218540400385bd2956d",
+    "modelId": "lumi.relay.c2acn01",
+    "manufacturerName": [
+      "LUMI"
+    ],
+    "otaHeaderString": "DR1175r1v1UNENCRYPTED00000JN5169",
+    "minFileVersion": 0,
+    "maxFileVersion": 1,
+    "releaseNotes": "Factory firmware v47 from the official Zigbee2MQTT OTA repository. Offered to the custom firmware."
   }
 ]

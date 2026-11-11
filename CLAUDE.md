@@ -69,6 +69,11 @@ dateCode 09-20-2018; node descriptor manufacturer 4151 (0x1037); no configured r
 - Version policy (user decision): the running firmware reports a **lowered** current file
   version so Z2M offers the factory image; "update available" stays visible. Custom images
   are offered via `ota.zigbee_ota_override_index_location` or a per-request `url`.
+  Published index (`ota/index.json` in the GitHub repo lNikazzzl/aqara-llkzmk11lm-custom-fw)
+  uses min/maxFileVersion so the entries do not shadow each other: our image for running
+  versions 2..16777727, the factory v47 (pointer to the official zigbee-OTA URL) for 0..1.
+  Z2M takes the first matching entry and the override index goes first, so without the
+  windows it would keep offering our own image after the switch.
 - EEPROM shared with the factory firmware: no PDM wipe, PDM on segments 0–126 (segment 127 is non-PDM factory data),
   our own data outside PDM in segments 192–207 (app_store.c), stack table sizes matching the
   factory ones. Restore `eeprom_backup.bin` before testing (needs a small restore firmware).
