@@ -3,7 +3,7 @@
 Replacement firmware for the Aqara dual relay module LLKZMK11LM (`lumi.relay.c2acn01`),
 MCU NXP JN5169. Goal: our firmware and the factory firmware replace each other over the
 air (Zigbee OTA from Zigbee2MQTT), and Zigbee2MQTT keeps seeing an ordinary LLKZMK11LM;
-only the firmware version differs. Current release: **0.2.4**.
+only the firmware version differs. Current release: **0.2.4** published, 0.2.5 built (wall re-pairing).
 
 ## Safety
 
@@ -64,6 +64,9 @@ only the firmware version differs. Current release: **0.2.4**.
   SW build `custom-<version>`. Endpoints as the factory interview: EP1 dev 257 in
   [0,3,4,5,1,2,10,6,16,0x0B04,12] out [25,10]; EP2 dev 257 in [6,16,4,5]. Node descriptor
   manufacturer 4151 (0x1037). Z2M configures no reportings: we report OnOff ourselves.
+- Re-pairing from the wall (0.2.5, user request): 10 S1/S2 operations within 10 s (rocker:
+  each flip, push button: each press) post the same event as holding the button 5 s
+  (leave, reset, steering). inputs.c, SWITCH_REPAIR_COUNT / SWITCH_REPAIR_WINDOW_MS.
 - Lumi protocol (lumi.c, on raw APS before the ZCL): interlock genBinaryOutput 0xFF06,
   power_outage_memory genBasic 0xFFF0 magic payloads, heartbeat genBasic 0xFF01 every 50 min
   with tags 3 (chip temperature), 5 (power-on count), 100/101 (relays).
@@ -101,7 +104,8 @@ only the firmware version differs. Current release: **0.2.4**.
 - EEPROM snapshots (all contain the **network key — never publish**): `eeprom_backup.bin`
   (factory state, CRC 47203fff), `eeprom_before_restore.bin` (after 0.1.0),
   `eeprom_before_restore_021*.bin` (after 0.2.1), `eeprom_after_stock_crash.bin`.
-  `index_sector_0x01001400.bin`: MAC and chip settings.
+  `index_sector_0x01001400.bin`: MAC and chip settings. `БЭКАПЫ.md` describes these files
+  for the user in Russian (local only, not in the repo); keep it in sync when adding snapshots.
 - `re/`: disassembly work (`stock.img`, `mine.dis`, library listings).
 - The factory firmware prints on the same UART (`Lumi_NVM_InitData`, and a stack dump on a crash).
 

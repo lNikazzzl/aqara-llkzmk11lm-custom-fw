@@ -26,6 +26,7 @@
 
 #define DEBOUNCE_TICKS      (INPUT_DEBOUNCE_MS / INPUT_SCAN_MS)
 #define LONG_PRESS_TICKS    (BTN_LONG_PRESS_MS / INPUT_SCAN_MS)
+#define REPAIR_WINDOW_TICKS (SWITCH_REPAIR_WINDOW_MS / INPUT_SCAN_MS)
 
 PRIVATE const uint32 au32Pin[NUM_INPUTS] = { BTN_PAIR, IN_S1, IN_S2 };
 
@@ -33,6 +34,10 @@ PRIVATE bool_t abActive[NUM_INPUTS];    /* debounced state, TRUE = closed */
 PRIVATE uint8 au8Stable[NUM_INPUTS];    /* ticks the raw level differs from abActive */
 PRIVATE uint16 u16HeldTicks;
 PRIVATE bool_t bLongSent;
+PRIVATE uint32 u32Ticks;                /* scan ticks since start */
+PRIVATE uint32 au32SwitchTicks[SWITCH_REPAIR_COUNT];   /* ring of the last switch operations */
+PRIVATE uint8 u8SwitchCount;
+PRIVATE uint8 u8SwitchNext;
 
 PRIVATE void vPost(APP_teEventType eType, uint8 u8Channel)
 {
@@ -41,6 +46,32 @@ PRIVATE void vPost(APP_teEventType eType, uint8 u8Channel)
     sEvent.eType = eType;
     sEvent.u8Channel = u8Channel;
     ZQ_bQueueSend(&APP_msgAppEvents, &sEvent);
+}
+
+/* TRUE when the last SWITCH_REPAIR_COUNT operations fit in the window */
+PRIVATE bool_t bSwitchRepairGesture(void)
+{
+    uint32 u32Oldest;
+
+    au32SwitchTicks[u8SwitchNext] = u32Ticks;
+    u8SwitchNext = (u8SwitchNext + 1) % SWITCH_REPAIR_COUNT;
+    if (u8SwitchCount < SWITCH_REPAIR_COUNT)
+    {
+        u8SwitchCount++;
+    }
+    if (u8SwitchCount < SWITCH_REPAIR_COUNT)
+    {
+        return FALSE;
+    }
+
+    /* the ring holds the last SWITCH_REPAIR_COUNT operations, u8SwitchNext is the oldest */
+    u32Oldest = au32SwitchTicks[u8SwitchNext];
+    if (u32Ticks - u32Oldest > REPAIR_WINDOW_TICKS)
+    {
+        return FALSE;
+    }
+    u8SwitchCount = 0;
+    return TRUE;
 }
 
 PRIVATE void vOnChange(uint8 u8Idx, bool_t bActive)
@@ -64,6 +95,13 @@ PRIVATE void vOnChange(uint8 u8Idx, bool_t bActive)
     if (INPUT_ROCKER_MODE || bActive)
     {
         vPost(APP_E_EVENT_SWITCH, (u8Idx == IDX_S1) ? 0 : 1);
+        if (bSwitchRepairGesture())
+        {
+            DBG_vPrintf(TRUE, "INPUT: %d switch operations in %d s, re-pairing\n",
+                        SWITCH_REPAIR_COUNT, SWITCH_REPAIR_WINDOW_MS / 1000);
+            /* same as holding the on-board button: leave, reset, look for a network */
+            vPost(APP_E_EVENT_BUTTON_LONG, 0);
+        }
     }
 }
 
@@ -100,6 +138,7 @@ PUBLIC void INPUTS_cbTimerScan(void *pvParam)
     uint8 i;
 
     ZTIMER_eStart(u8TimerInputs, ZTIMER_TIME_MSEC(INPUT_SCAN_MS));
+    u32Ticks++;
 
     for (i = 0; i < NUM_INPUTS; i++)
     {

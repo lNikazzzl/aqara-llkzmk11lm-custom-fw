@@ -37,7 +37,7 @@ OTA_HEADER_STRING    = DR1175r1v1UNENCRYPTED00000JN5169
 # version the running firmware reports: kept low so Zigbee2MQTT offers the factory image
 OTA_REPORTED_VERSION ?= 1
 # version of our OTA file: above the factory 47, 0x0100MMmm for release MM.mm
-OTA_FILE_VERSION     ?= 0x01000204
+OTA_FILE_VERSION     ?= 0x01000205
 CFLAGS += -DOTA_INTERNAL_STORAGE
 CFLAGS += -DCLD_OTA_MANF_ID_VALUE=$(OTA_MANUFACTURER)
 CFLAGS += -DAPP_OTA_FILE_VERSION=$(OTA_FILE_VERSION)
