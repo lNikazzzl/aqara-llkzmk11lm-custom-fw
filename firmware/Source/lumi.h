@@ -25,5 +25,7 @@ PUBLIC void LUMI_vInit(const tsLumiCallbacks *psCallbacks);
 PUBLIC bool_t LUMI_bHandleDataIndication(ZPS_tsAfDataIndEvent *psInd);
 PUBLIC void LUMI_vSendHeartbeat(uint16 u16PowerOnCount, bool_t bRelay1, bool_t bRelay2);
 PUBLIC int8 LUMI_i8ChipTemperature(void);
+/* Manufacturer specific genBasic report of one octet string attribute (debug dumps) */
+PUBLIC void LUMI_vSendOctetReport(uint16 u16Attr, const uint8 *pu8Data, uint8 u8Len);
 
 #endif /* LUMI_H */

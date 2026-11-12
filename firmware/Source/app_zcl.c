@@ -49,6 +49,7 @@
 #include "app_zcl.h"
 #include "led.h"
 #include "lumi.h"
+#include "pl7211.h"
 #include "relay.h"
 
 #ifdef DEBUG_ZCL
@@ -285,6 +286,7 @@ PUBLIC void APP_ZCL_cbTimerTick(void *pvParam)
     ZTIMER_eStart(u8TimerZclTick, ZTIMER_TIME_MSEC(ZCL_TICK_MS));
 
     eZCL_Update100mS();
+    PL7211_vTick100ms();
 
     if (++u8Tick >= TICKS_PER_SECOND)
     {

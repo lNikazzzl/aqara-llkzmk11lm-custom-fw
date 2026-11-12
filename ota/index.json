@@ -1,34 +1,18 @@
 [
   {
-    "url": "https://raw.githubusercontent.com/lNikazzzl/aqara-llkzmk11lm-custom-fw/main/ota/lumi.relay.c2acn01_custom_0.2.4.ota",
-    "fileVersion": 16777732,
-    "fileSize": 158414,
+    "url": "https://raw.githubusercontent.com/lNikazzzl/aqara-llkzmk11lm-custom-fw/pl7211-probe/ota/lumi.relay.c2acn01_custom_0.2.6.ota",
+    "fileVersion": 16777734,
+    "fileSize": 159342,
     "manufacturerCode": 4447,
     "imageType": 257,
-    "sha512": "4d7dd4f5fe43adb153ed0aadebca9e50d8e7028ca2b9656319ca3e82c851f3d7314aa2ef698b0718fe5881ac4921944d17a829b3b989778b2d9cd318717e236b",
-    "modelId": "lumi.relay.c2acn01",
-    "manufacturerName": [
-      "LUMI"
-    ],
-    "otaHeaderString": "DR1175r1v1UNENCRYPTED00000JN5169",
-    "minFileVersion": 2,
-    "maxFileVersion": 16777727,
-    "releaseNotes": "Custom firmware 0.2.4 (experimental). Offered to the factory firmware; pairing is required after every switch."
-  },
-  {
-    "url": "https://raw.githubusercontent.com/Koenkk/zigbee-OTA/master/images/Lumi/lumi.relay.c2acn01_20211201_v0047.ota",
-    "fileVersion": 47,
-    "fileSize": 182206,
-    "manufacturerCode": 4447,
-    "imageType": 257,
-    "sha512": "66380db41c6f9cc8d4c74809caff46c0cb1b691046c3e490fe8d98f2fa2a5c6acceb1d27456a3d7efd50cde92ef150c5adbc0287538a7218540400385bd2956d",
+    "sha512": "015bb00275f7f223743a74d0f1b1c31032bc566b65213b58bedd1258a606d8a69e1b6cfae2c34d0e734409e81e9fedd3b7d2792bed70ef58f36975e95c69ff17",
     "modelId": "lumi.relay.c2acn01",
     "manufacturerName": [
       "LUMI"
     ],
     "otaHeaderString": "DR1175r1v1UNENCRYPTED00000JN5169",
     "minFileVersion": 0,
-    "maxFileVersion": 1,
-    "releaseNotes": "Factory firmware v47 from the official Zigbee2MQTT OTA repository. Offered to the custom firmware; pairing is required after the switch."
+    "maxFileVersion": 16777727,
+    "releaseNotes": "Custom firmware 0.2.6 (test build, branch pl7211-probe): 0.2.5 + read-only PL7211 power meter probe, raw dumps in genBasic 0xFFF5/0xFFF6 reports. Offered to every firmware; from our firmware the network is kept, from the factory firmware pairing is required."
   }
 ]

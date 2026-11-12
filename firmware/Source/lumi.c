@@ -232,6 +232,29 @@ PUBLIC void LUMI_vSendHeartbeat(uint16 u16PowerOnCount, bool_t bRelay1, bool_t b
     vSend(CLUSTER_BASIC, LUMI_EP, COORDINATOR_EP, COORDINATOR_ADDR, au8Frame, n);
 }
 
+PUBLIC void LUMI_vSendOctetReport(uint16 u16Attr, const uint8 *pu8Data, uint8 u8Len)
+{
+    uint8 au8Frame[9 + 48];
+    uint8 n = 0;
+
+    if (u8Len > sizeof(au8Frame) - 9)
+    {
+        u8Len = sizeof(au8Frame) - 9;
+    }
+    au8Frame[n++] = ZCL_FC_MANUF_SPECIFIC | ZCL_FC_SERVER_TO_CLIENT | ZCL_FC_DISABLE_DEFAULT_RSP;
+    au8Frame[n++] = LUMI_MANUFACTURER_CODE & 0xff;
+    au8Frame[n++] = LUMI_MANUFACTURER_CODE >> 8;
+    au8Frame[n++] = u8GetTransactionSequenceNumber();
+    au8Frame[n++] = ZCL_CMD_REPORT;
+    au8Frame[n++] = u16Attr & 0xff;
+    au8Frame[n++] = u16Attr >> 8;
+    au8Frame[n++] = ZCL_TYPE_OCTSTR;
+    au8Frame[n++] = u8Len;
+    memcpy(&au8Frame[n], pu8Data, u8Len);
+    n += u8Len;
+    vSend(CLUSTER_BASIC, LUMI_EP, COORDINATOR_EP, COORDINATOR_ADDR, au8Frame, n);
+}
+
 /* Internal temperature sensor; conversion from the NXP JN-AN-1218 example */
 PUBLIC int8 LUMI_i8ChipTemperature(void)
 {

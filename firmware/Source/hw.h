@@ -27,7 +27,7 @@
 #define RELAY2_OFF          DIO(9)
 #define RELAY_ALL           (RELAY1_ON | RELAY1_OFF | RELAY2_ON | RELAY2_OFF)
 
-/* PL7211 power meter (not used yet): SPI on DO0/DIO18/DIO19/DO1, reset DIO3 */
+/* PL7211 power meter: SPI CLK DO0, MOSI DIO18, MISO DO1, CS DIO19, reset DIO3 (pl7211.c, read-only probe) */
 
 #define RELAY_CHANNELS      2
 
